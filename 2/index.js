@@ -67,7 +67,7 @@ function cubicInterpolation(maxIter = 50, tol = 0.01) {
         // Если изменение центрального приближения меньше tol, завершаем итерации
         if (Math.abs(thetaNew - theta2) < tol) {
             theta2 = thetaNew;
-            break;
+            // break;
         }
     }
 

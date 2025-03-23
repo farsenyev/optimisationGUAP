@@ -1,23 +1,24 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Метод Кубической Интерполяции для f(θ)</title>
+  <title>Метод Кубической Интерполяции с Chart.js</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    canvas {
-      border: 1px solid #ccc;
-      display: block;
-      margin: 20px auto;
-    }
     body {
       font-family: Arial, sans-serif;
       text-align: center;
+    }
+    canvas {
+      height: 100%;
+      width: 100%;
+      margin: 20px auto;
     }
   </style>
 </head>
 <body>
 <h1>Метод Кубической Интерполяции для максимизации f(θ)</h1>
-<canvas id="plotCanvas" width="800" height="600"></canvas>
+<canvas id="myChart"></canvas>
 
 <script>
   // Целевая функция: f(θ) = 2 - cosθ + √3 sinθ
@@ -28,16 +29,16 @@
   // Метод кубической интерполяции для максимизации f(θ)
   function cubicInterpolation(maxIter = 50, tol = 0.01) {
     // Начальные точки: θ1, θ2, θ3
-    let theta1 = 1.0; // левая граница
-    let theta2 = 2.0; // центральная точка (ближе к оптимуму)
-    let theta3 = 3.0; // правая граница
+    let theta1 = 1.0;  // левая граница
+    let theta2 = 2.0;  // центральная точка (ближе к экстремуму)
+    let theta3 = 3.0;  // правая граница
     let iterPoints = [theta1, theta2, theta3];
 
     for (let i = 0; i < maxIter; i++) {
       const f1 = f(theta1);
       const f2 = f(theta2);
       const f3 = f(theta3);
-      // Формула кубической интерполяции
+      // Формула кубической интерполяции:
       const num = Math.pow(theta2 - theta1, 2) * (f2 - f3) - Math.pow(theta2 - theta3, 2) * (f2 - f1);
       const den = (theta2 - theta1) * (f2 - f3) - (theta2 - theta3) * (f2 - f1);
       if (Math.abs(den) < 1e-8) break; // защита от деления на ноль
@@ -45,7 +46,7 @@
       const thetaNew = theta2 - 0.5 * (num / den);
       iterPoints.push(thetaNew);
 
-      // Собираем все имеющиеся точки и сортируем их по значению θ
+      // Собираем имеющиеся точки и сортируем их по возрастанию θ
       let pts = [
         { theta: theta1, f: f1 },
         { theta: theta2, f: f2 },
@@ -57,7 +58,7 @@
       // Находим точку с максимальным значением f
       const maxPoint = pts.reduce((prev, curr) => (curr.f > prev.f ? curr : prev));
       const idxMax = pts.findIndex(pt => pt.theta === maxPoint.theta);
-      // Обновляем набор из трёх точек так, чтобы максимум оказался в центре
+      // Обновляем набор так, чтобы максимум оказался в центре
       if (idxMax === 0) {
         pts = pts.slice(0, 3);
       } else if (idxMax === pts.length - 1) {
@@ -78,107 +79,94 @@
     return { thetaOpt: theta2, fOpt: f(theta2), iterPoints };
   }
 
-  // Запуск метода кубической интерполяции
+  // Вычисляем оптимальное значение и итерационные точки
   const result = cubicInterpolation(50, 0.01);
   console.log("Оптимальный угол θ:", result.thetaOpt);
   console.log("Максимальное значение f(θ):", result.fOpt);
   console.log("Максимальное BD =", Math.sqrt(result.fOpt)); // f(θ) = BD²
   console.log("Итерационные точки:", result.iterPoints);
 
-  // Рисуем график функции и итерационные точки на canvas
-  const canvas = document.getElementById("plotCanvas");
-  const ctx = canvas.getContext("2d");
-  const width = canvas.width;
-  const height = canvas.height;
-
-  // Определим диапазон по оси x: θ от 0.5 до 3.5
+  // Подготавливаем данные для графика функции f(θ) на интервале [0.5, 3.5]
   const thetaMin = 0.5;
   const thetaMax = 3.5;
-
-  // Вычисляем диапазон f(θ) по выборке
-  let fMin = Infinity, fMax = -Infinity;
-  const samples = 400;
-  let sampleData = [];
-  for (let i = 0; i <= samples; i++) {
-    let theta = thetaMin + (thetaMax - thetaMin) * i / samples;
-    let fVal = f(theta);
-    sampleData.push({ theta: theta, f: fVal });
-    if (fVal < fMin) fMin = fVal;
-    if (fVal > fMax) fMax = fVal;
-  }
-  // Добавим отступы по краям
-  const paddingX = 50;
-  const paddingY = 50;
-
-  // Функции преобразования координат (математические -> экранные)
-  function toScreenX(theta) {
-    return paddingX + (theta - thetaMin) / (thetaMax - thetaMin) * (width - 2 * paddingX);
-  }
-  function toScreenY(fVal) {
-    // Координата y инвертирована (0 сверху)
-    return height - paddingY - (fVal - fMin) / (fMax - fMin) * (height - 2 * paddingY);
+  let functionData = [];
+  const sampleCount = 400;
+  for (let i = 0; i <= sampleCount; i++) {
+    let theta = thetaMin + (thetaMax - thetaMin) * i / sampleCount;
+    functionData.push({ x: theta, y: f(theta) });
   }
 
-  // Рисуем оси
-  ctx.strokeStyle = "#000";
-  ctx.lineWidth = 1;
-  // Ось x
-  ctx.beginPath();
-  ctx.moveTo(paddingX, height - paddingY);
-  ctx.lineTo(width - paddingX, height - paddingY);
-  ctx.stroke();
-  // Ось y
-  ctx.beginPath();
-  ctx.moveTo(paddingX, height - paddingY);
-  ctx.lineTo(paddingX, paddingY);
-  ctx.stroke();
+  // Итерационные точки для отображения
+  let iterData = result.iterPoints.map(theta => ({ x: theta, y: f(theta) }));
 
-  // Рисуем график функции f(θ)
-  ctx.strokeStyle = "blue";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  for (let i = 0; i < sampleData.length; i++) {
-    const pt = sampleData[i];
-    const x = toScreenX(pt.theta);
-    const y = toScreenY(pt.f);
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  }
-  ctx.stroke();
+  // Оптимальная точка
+  let optData = [{ x: result.thetaOpt, y: f(result.thetaOpt) }];
 
-  // Рисуем итерационные точки и соединяем их линиями
-  ctx.strokeStyle = "red";
-  ctx.fillStyle = "red";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  for (let i = 0; i < result.iterPoints.length; i++) {
-    const theta = result.iterPoints[i];
-    const x = toScreenX(theta);
-    const y = toScreenY(f(theta));
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-    // Рисуем маленький кружок для точки
-    ctx.beginPath();
-    ctx.arc(x, y, 3, 0, 2 * Math.PI);
-    ctx.fill();
-  }
-  ctx.stroke();
-
-  // Вывод оптимальной точки (θ_opt, f(θ_opt)) зелёным цветом
-  const optX = toScreenX(result.thetaOpt);
-  const optY = toScreenY(f(result.thetaOpt));
-  ctx.fillStyle = "green";
-  ctx.beginPath();
-  ctx.arc(optX, optY, 5, 0, 2 * Math.PI);
-  ctx.fill();
-  ctx.strokeStyle = "green";
-  ctx.stroke();
-
-  // Подписи осей
-  ctx.fillStyle = "black";
-  ctx.font = "14px Arial";
-  ctx.fillText("θ", width - paddingX + 10, height - paddingY + 5);
-  ctx.fillText("f(θ)", paddingX - 40, paddingY - 10);
+  // Конфигурация графика с использованием Chart.js
+  const ctx = document.getElementById('myChart').getContext('2d');
+  const myChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [
+        {
+          label: 'f(θ)',
+          data: functionData,
+          borderColor: 'blue',
+          backgroundColor: 'rgba(0,0,255,0.1)',
+          fill: false,
+          pointRadius: 0, // не отображаем точки для функции
+          tension: 0.2,
+        },
+        {
+          label: 'Итерационные точки',
+          data: iterData,
+          borderColor: 'red',
+          backgroundColor: 'red',
+          showLine: true,
+          pointRadius: 5,
+          pointStyle: 'circle',
+          fill: false,
+          tension: 0,
+        },
+        {
+          label: 'Оптимальная точка',
+          data: optData,
+          borderColor: 'green',
+          backgroundColor: 'green',
+          showLine: false,
+          pointRadius: 7,
+          pointStyle: 'rectRot',
+          fill: false,
+        }
+      ]
+    },
+    options: {
+      scales: {
+        x: {
+          type: 'linear',
+          position: 'bottom',
+          title: {
+            display: true,
+            text: 'θ (рад)'
+          },
+          min: thetaMin,
+          max: thetaMax
+        },
+        y: {
+          title: {
+            display: true,
+            text: 'f(θ)'
+          }
+        }
+      },
+      plugins: {
+        title: {
+          display: true,
+          text: 'Метод Кубической Интерполяции для Максимизации f(θ)'
+        }
+      }
+    }
+  });
 </script>
 </body>
 </html>
