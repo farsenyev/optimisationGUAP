@@ -33,11 +33,14 @@ function cubicInterpolation(maxIter = 50, tol = 0.01) {
 
         // Собираем имеющиеся точки в массив объектов {theta, f}
         let pts = [
-            { theta: theta1, f: f1 },
-            { theta: theta2, f: f2 },
-            { theta: theta3, f: f3 },
-            { theta: thetaNew, f: f(thetaNew) }
+            {theta: theta1, f: f1},
+            {theta: theta2, f: f2},
+            {theta: theta3, f: f3},
+            {theta: thetaNew, f: f(thetaNew)}
         ];
+
+        console.log("Итерация:", i);
+        console.log("Значения", pts[i]);
 
         // Сортируем точки по возрастанию theta
         pts.sort((a, b) => a.theta - b.theta);
@@ -68,7 +71,7 @@ function cubicInterpolation(maxIter = 50, tol = 0.01) {
         }
     }
 
-    return { thetaOpt: theta2, fOpt: f(theta2), iterPoints };
+    return {thetaOpt: theta2, fOpt: f(theta2), iterPoints};
 }
 
 // Запускаем метод кубической интерполяции
