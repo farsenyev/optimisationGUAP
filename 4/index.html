@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Contour Plots f15 & f35</title>
+    <style>
+        .plot { width: 45%; display: inline-block; }
+    </style>
+</head>
+<body>
+<div id="contour15" class="plot"></div>
+<div id="contour35" class="plot"></div>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+<script src="BatAlgorithm.js"></script>
+<script>
+    const result15 = { position: [-0.040211,  0.702234], fitness: 0.468126 };
+    const result35 = { position: [-3.019072,  -0.520037], fitness: 97.549302 };
+    // генератор равномерной сетки
+    function linspace(a, b, n) {
+        const arr = [];
+        const step = (b - a) / (n - 1);
+        for (let i = 0; i < n; i++) arr.push(a + step * i);
+        return arr;
+    }
+
+    // Функции
+    function f15(x, y) {
+        return x**6/6 - 1.05*x**4 + 2*x**2 + x*y + y**2;
+    }
+    function f35(x, y) {
+        return (x*x + y*y)**2 + x*x + y*y + Math.sin(50*(x*x + y*y)) + 1;
+    }
+
+    // Сетка для f15: x,y ∈ [-5,5]
+    const N15 = 200;
+    const xs15 = linspace(-5, 5, N15);
+    const ys15 = linspace(-5, 5, N15);
+    const zs15 = xs15.map(x => ys15.map(y => f15(x, y)));
+
+    // Сетка для f35: x,y ∈ [-10,10]
+    const N35 = 200;
+    const xs35 = linspace(-10, 10, N35);
+    const ys35 = linspace(-10, 10, N35);
+    const zs35 = xs35.map(x => ys35.map(y => f35(x, y)));
+
+    // ваши найденные экстремумы (замените на реальные переменные из алгоритма)
+    const best15 = { x: result15.position[0], y: result15.position[1] };
+    const best35 = { x: result35.position[0], y: result35.position[1] };
+
+    // Построение f15
+    Plotly.newPlot('contour15', [
+        {
+            z: zs15,
+            x: xs15,
+            y: ys15,
+            type: 'contour',
+            contours: {
+                coloring: 'lines',
+                showlabels: true,
+                labelfont: { size: 12, color: 'black' }
+            },
+            colorbar: { title: 'f15' }
+        },
+        {
+            x: [best15.x],
+            y: [best15.y],
+            mode: 'markers',
+            name: 'Экстремум',
+            marker: { size: 10, color: 'red', symbol: 'x' }
+        }
+    ], {
+        title: 'Контурная карта f₁₅(x,y)',
+        xaxis: { title: 'x' },
+        yaxis: { title: 'y' }
+    });
+
+    // Построение f35
+    Plotly.newPlot('contour35', [
+        {
+            z: zs35,
+            x: xs35,
+            y: ys35,
+            type: 'contour',
+            contours: {
+                coloring: 'lines',
+                showlabels: true,
+                labelfont: { size: 12, color: 'black' }
+            },
+            colorbar: { title: 'f35' }
+        },
+        {
+            x: [best35.x],
+            y: [best35.y],
+            mode: 'markers',
+            name: 'Экстремум',
+            marker: { size: 10, color: 'red', symbol: 'x' }
+        }
+    ], {
+        title: 'Контурная карта f₃₅(x,y)',
+        xaxis: { title: 'x' },
+        yaxis: { title: 'y' }
+    });
+</script>
+</body>
+</html>
